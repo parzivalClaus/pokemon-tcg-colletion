@@ -3,6 +3,7 @@ import {
   Drawer,
   List as MUIList,
   ListItem,
+  Box,
   ListItemText,
   Button,
   Dialog,
@@ -12,6 +13,7 @@ import {
 } from "@mui/material";
 import { getGenerationById, getStatsByGeneration } from "@/utils/index";
 import { supabase } from "@/lib/supabase";
+import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
 import styles from "./list.module.css";
 import type { User } from "@supabase/supabase-js";
 
@@ -246,8 +248,6 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
         </DialogActions>
       </Dialog>
 
-      <Button onClick={() => setDrawerOpen(true)}>📊 Estatísticas</Button>
-
       <Drawer
         anchor="right"
         open={drawerOpen}
@@ -306,6 +306,18 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
       </Drawer>
 
       <div className={styles.content}>
+        <Box>
+          <Button
+            sx={{
+              padding: 0,
+              marginBottom: 2,
+            }}
+            onClick={() => setDrawerOpen(true)}
+          >
+            <InfoOutlineIcon sx={{ marginRight: 1 }} /> Estatísticas
+          </Button>
+        </Box>
+
         <div className={styles.search}>
           <input
             type="text"
