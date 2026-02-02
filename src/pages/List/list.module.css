@@ -148,6 +148,11 @@
     margin-top: 6px;
     margin-bottom: 12px;
   }
+
+  span {
+    font-size: 12px;
+    font-weight: 600;
+  }
 }
 
 @media screen and (max-width: 650px) {
