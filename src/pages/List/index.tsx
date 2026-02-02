@@ -5,6 +5,10 @@ import {
   ListItem,
   ListItemText,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import { getGenerationById, getStatsByGeneration } from "@/utils/index";
 import { supabase } from "@/lib/supabase";
@@ -25,6 +29,10 @@ type ListProps = {
 
 function List({ ownedIds, setOwnedIds, user }: ListProps) {
   const [loading, setLoading] = useState(true);
+  const [loadingUpdatePokemon, setLoadingUpdatePokemon] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
+  const [actionType, setActionType] = useState<"add" | "remove">("add");
   const [pokemons, setPokemons] = useState<Pokemon[]>([]);
   const [onlyOwned, setOnlyOwned] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -76,7 +84,15 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
     setOwnedIds(data.map((item) => item.pokemon_id));
   }
 
+  function handleToggleClick(pokemon: Pokemon) {
+    const jaTenho = ownedIds.includes(pokemon.id);
+    setSelectedPokemon(pokemon);
+    setActionType(jaTenho ? "remove" : "add");
+    setDialogOpen(true);
+  }
+
   async function toggleCard(pokemonId: number) {
+    setLoadingUpdatePokemon(true);
     const { data } = await supabase.auth.getUser();
     const user = data.user;
     if (!user) return;
@@ -91,6 +107,8 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
         .eq("user_id", user.id)
         .eq("pokemon_id", pokemonId);
 
+      setLoadingUpdatePokemon(false);
+
       if (!error) {
         setOwnedIds((prev) => prev.filter((id) => id !== pokemonId));
       }
@@ -100,6 +118,8 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
         user_id: user.id,
         pokemon_id: pokemonId,
       });
+
+      setLoadingUpdatePokemon(false);
 
       if (!error) {
         setOwnedIds((prev) => [...prev, pokemonId]);
@@ -170,6 +190,61 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
         <h4>Seja bem-vindo, {user?.user_metadata.display_name}</h4>
         <p onClick={logout}>Sair</p>
       </div>
+
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+        <DialogTitle
+          sx={{
+            padding: "32px",
+          }}
+        >
+          {actionType === "add" ? "Adicionar Pokémon" : "Remover Pokémon"}
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            padding: "0 32px",
+          }}
+        >
+          {selectedPokemon && (
+            <p>
+              Tem certeza que deseja{" "}
+              {actionType === "add" ? "marcar" : "desmarcar"} o Pokémon{" "}
+              <b
+                style={{
+                  textTransform: "capitalize",
+                }}
+              >
+                {selectedPokemon.name}
+              </b>
+              ?
+            </p>
+          )}
+        </DialogContent>
+        <DialogActions
+          sx={{
+            padding: "32px",
+          }}
+        >
+          <Button
+            sx={{ marginRight: "6px" }}
+            onClick={() => setDialogOpen(false)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            loading={loadingUpdatePokemon}
+            variant="contained"
+            color={actionType === "add" ? "primary" : "error"}
+            onClick={async () => {
+              if (selectedPokemon) {
+                await toggleCard(selectedPokemon.id);
+              }
+              setDialogOpen(false);
+            }}
+          >
+            Confirmar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Button onClick={() => setDrawerOpen(true)}>📊 Estatísticas</Button>
 
@@ -299,7 +374,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
                 <div
                   className={styles.pokemonBox}
                   key={pokemon.id}
-                  onClick={() => toggleCard(pokemon.id)}
+                  onClick={() => handleToggleClick(pokemon)}
                   style={{
                     cursor: "pointer",
                     opacity: tenho ? 1 : 0.35,
