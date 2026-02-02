@@ -19,6 +19,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
   const [loading, setLoading] = useState(true);
   const [pokemons, setPokemons] = useState<Pokemon[]>([]);
   const [onlyOwned, setOnlyOwned] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [onlyNotOwned, setOnlyNotOwned] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -137,6 +138,15 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
   }, []);
 
   useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedSearch(search);
     }, 300); // 300ms é um bom padrão
@@ -243,6 +253,30 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
             })}
         </div>
       </div>
+
+      {showScrollTop && (
+        <div
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          style={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            background: "#2f7cc4",
+            color: "#fff",
+            border: "none",
+            textAlign: "center",
+            borderRadius: "50%",
+            width: 35,
+            height: 35,
+            cursor: "pointer",
+            fontSize: 24,
+            boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+            zIndex: 1000,
+          }}
+        >
+          ↑
+        </div>
+      )}
     </div>
   );
 }
