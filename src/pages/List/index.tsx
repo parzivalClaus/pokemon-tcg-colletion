@@ -1,4 +1,12 @@
 import { useEffect, useState } from "react";
+import {
+  Drawer,
+  List as MUIList,
+  ListItem,
+  ListItemText,
+  Button,
+} from "@mui/material";
+import { getGenerationById, getStatsByGeneration } from "@/utils/index";
 import { supabase } from "@/lib/supabase";
 import styles from "./list.module.css";
 import type { User } from "@supabase/supabase-js";
@@ -24,6 +32,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const isSearching = search !== debouncedSearch;
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const filteredPokemons = pokemons.filter((p) =>
     p.name.toLowerCase().includes(debouncedSearch.toLowerCase()),
@@ -108,6 +117,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
         id,
         name: p.name,
         image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
+        generation: getGenerationById(id),
       };
     });
 
@@ -160,6 +170,65 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
         <h4>Seja bem-vindo, {user?.user_metadata.display_name}</h4>
         <p onClick={logout}>Sair</p>
       </div>
+
+      <Button onClick={() => setDrawerOpen(true)}>📊 Estatísticas</Button>
+
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      >
+        <MUIList style={{ width: 280 }}>
+          <ListItem
+            sx={{
+              borderBottom: "1px solid #ededed",
+
+              "& span": {
+                fontSize: 14,
+                fontWeight: 600,
+              },
+
+              "& p": {
+                fontSize: 12,
+              },
+            }}
+          >
+            <ListItemText
+              primary={`Total Pokémons: ${pokemons.length}`}
+              secondary={`Tenho: ${ownedIds.length} | Faltam: ${pokemons.length - ownedIds.length}`}
+            />
+          </ListItem>
+
+          {getStatsByGeneration(pokemons, ownedIds).map((stat) => {
+            if (stat.generation === 0) {
+              return;
+            }
+
+            return (
+              <ListItem
+                sx={{
+                  borderBottom: "1px solid #ededed",
+
+                  "& span": {
+                    fontSize: 14,
+                    fontWeight: 600,
+                  },
+
+                  "& p": {
+                    fontSize: 12,
+                  },
+                }}
+                key={stat.generation}
+              >
+                <ListItemText
+                  primary={`Geração ${stat.generation} - ${stat.total} Pokémons`}
+                  secondary={`Tenho: ${stat.owned} | Faltam: ${stat.missing}`}
+                />
+              </ListItem>
+            );
+          })}
+        </MUIList>
+      </Drawer>
 
       <div className={styles.content}>
         <div className={styles.search}>
