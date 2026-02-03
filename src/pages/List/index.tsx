@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Drawer,
   List as MUIList,
@@ -17,7 +17,7 @@ import { CircularProgress } from "@mui/material";
 import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
 import styles from "./list.module.css";
 import type { User } from "@supabase/supabase-js";
-import LazyImage from "@/components/LazyImage";
+import PokemonCard from "@/components/PokemonCard";
 
 type Pokemon = {
   id: number;
@@ -46,17 +46,17 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
   const isSearching = search !== debouncedSearch;
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const filteredPokemons = pokemons.filter((p) =>
-    p.name.toLowerCase().includes(debouncedSearch.toLowerCase()),
-  );
-
-  const visiblePokemons = filteredPokemons.filter((p) => {
-    if (onlyOwned) {
-      return ownedIds.includes(p.id);
-    } else if (onlyNotOwned) {
-      return !ownedIds.includes(p.id);
-    } else return true;
-  });
+  const visiblePokemons = useMemo(() => {
+    return pokemons
+      .filter((p) =>
+        p.name.toLowerCase().includes(debouncedSearch.toLowerCase()),
+      )
+      .filter((p) => {
+        if (onlyOwned) return ownedIds.includes(p.id);
+        if (onlyNotOwned) return !ownedIds.includes(p.id);
+        return true;
+      });
+  }, [pokemons, debouncedSearch, onlyOwned, onlyNotOwned, ownedIds]);
 
   async function logout() {
     const { error } = await supabase.auth.signOut();
@@ -390,40 +390,15 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
         <div className={styles.pokemonContainer}>
           {!showLoading &&
             !isSearching &&
-            visiblePokemons.map((pokemon) => {
-              const tenho = ownedIds.includes(pokemon.id);
-              const { folder, page, position } = getLocalization(pokemon.id);
-
-              return (
-                <div
-                  className={styles.pokemonBox}
-                  key={pokemon.id}
-                  onClick={() => handleToggleClick(pokemon)}
-                  style={{
-                    cursor: "pointer",
-                    opacity: tenho ? 1 : 0.35,
-                    filter: tenho ? "none" : "grayscale(100%)",
-                    transition: "0.2s",
-                    padding: 8,
-                  }}
-                >
-                  <LazyImage
-                    src={pokemon.image}
-                    alt={pokemon.name}
-                    width={96}
-                    height={96}
-                  />
-
-                  <p>
-                    <span>#{pokemon.id} - </span> {pokemon.name}
-                  </p>
-
-                  <small style={{ fontSize: 12, opacity: 0.8 }}>
-                    P{folder} • F{page} • Pos {position}
-                  </small>
-                </div>
-              );
-            })}
+            visiblePokemons.map((pokemon) => (
+              <PokemonCard
+                key={pokemon.id}
+                pokemon={pokemon}
+                owned={ownedIds.includes(pokemon.id)}
+                localization={getLocalization(pokemon.id)}
+                onClick={() => handleToggleClick(pokemon)}
+              />
+            ))}
         </div>
       </div>
 
