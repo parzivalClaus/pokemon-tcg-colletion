@@ -47,10 +47,20 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const visiblePokemons = useMemo(() => {
+    const term = debouncedSearch.trim().toLowerCase();
+    const isNumberSearch = /^\d+$/.test(term);
+    const searchNumber = Number(term);
+
     return pokemons
-      .filter((p) =>
-        p.name.toLowerCase().includes(debouncedSearch.toLowerCase()),
-      )
+      .filter((p) => {
+        if (!term) return true;
+
+        if (isNumberSearch) {
+          return p.id === searchNumber;
+        }
+
+        return p.name.toLowerCase().includes(term);
+      })
       .filter((p) => {
         if (onlyOwned) return ownedIds.includes(p.id);
         if (onlyNotOwned) return !ownedIds.includes(p.id);
@@ -332,7 +342,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
         <div className={styles.search}>
           <input
             type="text"
-            placeholder="Buscar Pokémon"
+            placeholder="Buscar por nome ou número"
             value={search}
             onChange={(e) => setSearch(e.target.value.toLowerCase())}
           />
