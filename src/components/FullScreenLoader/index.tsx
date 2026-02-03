@@ -10,7 +10,6 @@ export default function FullScreenLoader({
 }: FullScreenLoaderProps) {
   const [dots, setDots] = useState("");
 
-  // anima os "..."
   useEffect(() => {
     const interval = setInterval(() => {
       setDots((prev) => (prev.length >= 3 ? "" : prev + "."));
@@ -20,7 +19,7 @@ export default function FullScreenLoader({
   }, []);
 
   return (
-    <Fade in timeout={400}>
+    <Fade in timeout={500}>
       <Box
         sx={{
           position: "fixed",
@@ -30,12 +29,14 @@ export default function FullScreenLoader({
           alignItems: "center",
           justifyContent: "center",
           gap: 2,
-          background: "linear-gradient(180deg, #f9fafb, #eef1f5)",
+          backgroundColor: "rgba(43, 111, 174, 1)",
+          transition: "background-color 500ms ease",
           zIndex: 1300,
         }}
       >
-        <CircularProgress size={52} thickness={4} />
-        <Typography variant="body1" color="text.secondary">
+        <CircularProgress size={52} thickness={4} sx={{ color: "#fff" }} />
+
+        <Typography variant="body1" sx={{ color: "#fff", opacity: 0.9 }}>
           {text}
           {dots}
         </Typography>

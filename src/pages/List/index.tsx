@@ -13,9 +13,11 @@ import {
 } from "@mui/material";
 import { getGenerationById, getStatsByGeneration } from "@/utils/index";
 import { supabase } from "@/lib/supabase";
+import { CircularProgress } from "@mui/material";
 import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
 import styles from "./list.module.css";
 import type { User } from "@supabase/supabase-js";
+import LazyImage from "@/components/LazyImage";
 
 type Pokemon = {
   id: number;
@@ -30,8 +32,8 @@ type ListProps = {
 };
 
 function List({ ownedIds, setOwnedIds, user }: ListProps) {
-  const [loading, setLoading] = useState(true);
   const [loadingUpdatePokemon, setLoadingUpdatePokemon] = useState(false);
+  const [showLoading, setShowLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
   const [actionType, setActionType] = useState<"add" | "remove">("add");
@@ -102,7 +104,6 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
     const jaTenho = ownedIds.includes(pokemonId);
 
     if (jaTenho) {
-      // remover
       const { error } = await supabase
         .from("user_cards")
         .delete()
@@ -115,7 +116,6 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
         setOwnedIds((prev) => prev.filter((id) => id !== pokemonId));
       }
     } else {
-      // inserir
       const { error } = await supabase.from("user_cards").insert({
         user_id: user.id,
         pokemon_id: pokemonId,
@@ -160,10 +160,21 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
 
   useEffect(() => {
     async function init() {
-      setLoading(true);
+      setShowLoading(true);
+
+      const start = Date.now();
+
       await getPokemons();
       await getUserCards();
-      setLoading(false);
+
+      const elapsed = Date.now() - start;
+      const MIN_TIME = 600; // ms
+
+      const remaining = Math.max(MIN_TIME - elapsed, 0);
+
+      setTimeout(() => {
+        setShowLoading(false);
+      }, remaining);
     }
 
     init();
@@ -357,27 +368,28 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
           </label>
         </div>
 
-        {isSearching && (
-          <div className={styles.searching}>
-            <p>Buscando...</p>
-          </div>
+        {(showLoading || isSearching) && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "40vh",
+            }}
+          >
+            <CircularProgress size={48} />
+          </Box>
         )}
 
-        {loading && (
-          <div className={styles.searching}>
-            <p>Buscando...</p>
-          </div>
-        )}
-
-        {!loading && !isSearching && !visiblePokemons.length && (
+        {!showLoading && !isSearching && !visiblePokemons.length && (
           <div className={styles.searching}>
             <p>Não há nenhum resultado para exibir.</p>
           </div>
         )}
 
         <div className={styles.pokemonContainer}>
-          {!isSearching &&
-            !loading &&
+          {!showLoading &&
+            !isSearching &&
             visiblePokemons.map((pokemon) => {
               const tenho = ownedIds.includes(pokemon.id);
               const { folder, page, position } = getLocalization(pokemon.id);
@@ -395,7 +407,12 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
                     padding: 8,
                   }}
                 >
-                  <img src={pokemon.image} alt={pokemon.name} />
+                  <LazyImage
+                    src={pokemon.image}
+                    alt={pokemon.name}
+                    width={96}
+                    height={96}
+                  />
 
                   <p>
                     <span>#{pokemon.id} - </span> {pokemon.name}
