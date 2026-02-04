@@ -211,7 +211,9 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.header}>
-        <h4>Seja bem-vindo, {user?.user_metadata.display_name}</h4>
+        <h4>
+          Seja bem-vindo, {user?.user_metadata.display_name ?? "Treinador(a)"}
+        </h4>
         <p onClick={logout}>Sair</p>
       </div>
 
@@ -261,6 +263,9 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
             onClick={async () => {
               if (selectedPokemon) {
                 await toggleCard(selectedPokemon.id);
+                setSearch("");
+                setDebouncedSearch("");
+                searchInputRef.current?.focus();
               }
               setDialogOpen(false);
             }}
