@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import {
   Drawer,
   List as MUIList,
@@ -45,6 +45,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const isSearching = search !== debouncedSearch;
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const visiblePokemons = useMemo(() => {
     const term = debouncedSearch.trim().toLowerCase();
@@ -340,12 +341,30 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
         </Box>
 
         <div className={styles.search}>
-          <input
-            type="text"
-            placeholder="Buscar por nome ou número"
-            value={search}
-            onChange={(e) => setSearch(e.target.value.toLowerCase())}
-          />
+          <div className={styles.searchInputWrapper}>
+            <input
+              type="text"
+              placeholder="Buscar por nome ou número"
+              value={search}
+              onChange={(e) => setSearch(e.target.value.toLowerCase())}
+              ref={searchInputRef}
+            />
+
+            {search && (
+              <button
+                type="button"
+                className={styles.clearButton}
+                onClick={() => {
+                  setSearch("");
+                  setDebouncedSearch("");
+                  searchInputRef.current?.focus();
+                }}
+                aria-label="Limpar busca"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
 
         <div className={styles.filter}>
