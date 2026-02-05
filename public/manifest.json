@@ -4,8 +4,8 @@
   "description": "Controle da minha coleção de Pokémon",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1e5aa7",
-  "theme_color": "#1e5aa7",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "/icon-192.jpg",
@@ -18,9 +18,15 @@
       "type": "image/jpg"
     },
     {
-      "src": "/icon-512-maskable.png",
+      "src": "/icon-192-maskable.jpg",
+      "sizes": "192x192",
+      "type": "image/jpg",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512-maskable.jpg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpg",
       "purpose": "maskable"
     }
   ]
