@@ -11,8 +11,10 @@ export function getGenerationById(id: number): number {
   return 0;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getStatsByGeneration(pokemons: any[], ownedIds: number[]) {
+export function getStatsByGeneration(
+  pokemons: { generation: number; id: number }[],
+  ownedIds: number[],
+) {
   const generations = Array.from(
     new Set(pokemons.map((p) => p.generation)),
   ).sort((a, b) => a - b);

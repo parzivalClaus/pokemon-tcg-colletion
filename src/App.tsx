@@ -36,8 +36,6 @@ function App() {
       (_event, session) => {
         setUser(session?.user ?? null);
 
-        // coment to force deploy
-
         if (!session) {
           setOwnedIds([]);
         }

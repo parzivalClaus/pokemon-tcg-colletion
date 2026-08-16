@@ -2,9 +2,14 @@ import { memo } from "react";
 import LazyImage from "@/components/LazyImage";
 import styles from "@/pages/List/list.module.css";
 
+type Pokemon = {
+  image: string;
+  name: string;
+  id: number;
+};
+
 type Props = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  pokemon: any;
+  pokemon: Pokemon;
   owned: boolean;
   onClick: () => void;
   localization: {

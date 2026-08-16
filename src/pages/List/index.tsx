@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import {
   Drawer,
   List as MUIList,
@@ -14,7 +14,7 @@ import {
 import { getGenerationById, getStatsByGeneration } from "@/utils/index";
 import { supabase } from "@/lib/supabase";
 import { CircularProgress } from "@mui/material";
-import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import styles from "./list.module.css";
 import type { User } from "@supabase/supabase-js";
 import PokemonCard from "@/components/PokemonCard";
@@ -23,12 +23,13 @@ type Pokemon = {
   id: number;
   name: string;
   image: string;
+  generation: number;
 };
 
 type ListProps = {
   ownedIds: number[];
   setOwnedIds: React.Dispatch<React.SetStateAction<number[]>>;
-  user: User | null; // <-- adiciona aqui
+  user: User | null;
 };
 
 function List({ ownedIds, setOwnedIds, user }: ListProps) {
@@ -80,7 +81,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
     setOwnedIds([]);
   }
 
-  async function getUserCards() {
+  const getUserCards = useCallback(async () => {
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
 
@@ -97,7 +98,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
     }
 
     setOwnedIds(data.map((item) => item.pokemon_id));
-  }
+  }, [setOwnedIds]);
 
   function handleToggleClick(pokemon: Pokemon) {
     const jaTenho = ownedIds.includes(pokemon.id);
@@ -140,7 +141,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
     }
   }
 
-  async function getPokemons() {
+  const getPokemons = useCallback(async () => {
     const res = await fetch("https://pokeapi.co/api/v2/pokemon?limit=1025");
     const data = await res.json();
 
@@ -155,7 +156,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
     });
 
     setPokemons(pokemons);
-  }
+  }, []);
 
   function getLocalization(pokemonId: number) {
     const index = pokemonId - 1;
@@ -189,7 +190,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
     }
 
     init();
-  }, []);
+  }, [getPokemons, getUserCards]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -203,7 +204,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
   useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedSearch(search);
-    }, 300); // 300ms é um bom padrão
+    }, 300);
 
     return () => clearTimeout(timeout);
   }, [search]);
@@ -341,7 +342,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
             }}
             onClick={() => setDrawerOpen(true)}
           >
-            <InfoOutlineIcon sx={{ marginRight: 1 }} /> Estatísticas
+            <InfoOutlinedIcon sx={{ marginRight: 1 }} /> Estatísticas
           </Button>
         </Box>
 
