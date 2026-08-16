@@ -6,6 +6,7 @@ type Pokemon = {
   image: string;
   name: string;
   id: number;
+  generation: number;
 };
 
 type Props = {
@@ -24,7 +25,7 @@ function PokemonCard({ pokemon, owned, onClick, localization }: Props) {
 
   return (
     <div
-      className={styles.pokemonBox}
+      className={`${styles.pokemonBox} ${styles[`generation${pokemon.generation}`]}`}
       onClick={onClick}
       style={{
         cursor: "pointer",

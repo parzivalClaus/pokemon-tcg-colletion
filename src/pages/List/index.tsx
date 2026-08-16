@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  ListItemButton,
 } from "@mui/material";
 import { getGenerationById, getStatsByGeneration } from "@/utils/index";
 import { supabase } from "@/lib/supabase";
@@ -46,7 +47,11 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const isSearching = search !== debouncedSearch;
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [pendingGenerationScroll, setPendingGenerationScroll] = useState<
+    number | null
+  >(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const generationRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const visiblePokemons = useMemo(() => {
     const term = debouncedSearch.trim().toLowerCase();
@@ -105,6 +110,15 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
     setSelectedPokemon(pokemon);
     setActionType(jaTenho ? "remove" : "add");
     setDialogOpen(true);
+  }
+
+  function handleGenerationClick(generation: number) {
+    setSearch("");
+    setDebouncedSearch("");
+    setOnlyOwned(false);
+    setOnlyNotOwned(false);
+    setDrawerOpen(false);
+    setPendingGenerationScroll(generation);
   }
 
   async function toggleCard(pokemonId: number) {
@@ -209,13 +223,36 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
     return () => clearTimeout(timeout);
   }, [search]);
 
+  useEffect(() => {
+    if (showLoading || isSearching || pendingGenerationScroll === null) return;
+
+    generationRefs.current[pendingGenerationScroll]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    setPendingGenerationScroll(null);
+  }, [isSearching, pendingGenerationScroll, showLoading, visiblePokemons]);
+
   return (
     <div className={styles.pageContainer}>
       <div className={styles.header}>
         <h4>
           Seja bem-vindo, {user?.user_metadata.display_name ?? "Treinador(a)"}
         </h4>
-        <p onClick={logout}>Sair</p>
+        <div className={styles.headerActions}>
+          <Button
+            sx={{
+              color: "#fff",
+              padding: 0,
+              minWidth: "auto",
+              textTransform: "none",
+            }}
+            onClick={() => setDrawerOpen(true)}
+          >
+            <InfoOutlinedIcon sx={{ marginRight: 1 }} /> Estatísticas
+          </Button>
+          <p onClick={logout}>Sair</p>
+        </div>
       </div>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
@@ -309,6 +346,7 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
 
             return (
               <ListItem
+                disablePadding
                 sx={{
                   borderBottom: "1px solid #ededed",
 
@@ -323,10 +361,14 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
                 }}
                 key={stat.generation}
               >
-                <ListItemText
-                  primary={`Geração ${stat.generation} - ${stat.total} Pokémons`}
-                  secondary={`Tenho: ${stat.owned} | Faltam: ${stat.missing}`}
-                />
+                <ListItemButton
+                  onClick={() => handleGenerationClick(stat.generation)}
+                >
+                  <ListItemText
+                    primary={`Geração ${stat.generation} - ${stat.total} Pokémons`}
+                    secondary={`Tenho: ${stat.owned} | Faltam: ${stat.missing}`}
+                  />
+                </ListItemButton>
               </ListItem>
             );
           })}
@@ -334,18 +376,6 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
       </Drawer>
 
       <div className={styles.content}>
-        <Box>
-          <Button
-            sx={{
-              padding: 0,
-              marginBottom: 2,
-            }}
-            onClick={() => setDrawerOpen(true)}
-          >
-            <InfoOutlinedIcon sx={{ marginRight: 1 }} /> Estatísticas
-          </Button>
-        </Box>
-
         <div className={styles.search}>
           <div className={styles.searchInputWrapper}>
             <input
@@ -425,15 +455,30 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
         <div className={styles.pokemonContainer}>
           {!showLoading &&
             !isSearching &&
-            visiblePokemons.map((pokemon) => (
-              <PokemonCard
-                key={pokemon.id}
-                pokemon={pokemon}
-                owned={ownedIds.includes(pokemon.id)}
-                localization={getLocalization(pokemon.id)}
-                onClick={() => handleToggleClick(pokemon)}
-              />
-            ))}
+            visiblePokemons.map((pokemon, index) => {
+              const isFirstOfGeneration =
+                index === 0 ||
+                visiblePokemons[index - 1].generation !== pokemon.generation;
+
+              return (
+                <div
+                  className={styles.pokemonCardAnchor}
+                  key={pokemon.id}
+                  ref={(element) => {
+                    if (isFirstOfGeneration) {
+                      generationRefs.current[pokemon.generation] = element;
+                    }
+                  }}
+                >
+                  <PokemonCard
+                    pokemon={pokemon}
+                    owned={ownedIds.includes(pokemon.id)}
+                    localization={getLocalization(pokemon.id)}
+                    onClick={() => handleToggleClick(pokemon)}
+                  />
+                </div>
+              );
+            })}
         </div>
       </div>
 
