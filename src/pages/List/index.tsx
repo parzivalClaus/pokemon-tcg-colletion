@@ -92,17 +92,38 @@ function List({ ownedIds, setOwnedIds, user }: ListProps) {
 
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from("user_cards")
-      .select("pokemon_id")
-      .eq("user_id", user.id);
+    const ids = new Set<number>();
+    let lastPokemonId: number | undefined;
 
-    if (error) {
-      console.error(error);
-      return;
+    // Paginate by Pokemon ID, skipping duplicate rows even at page boundaries.
+    // Continue until empty: the server may impose a smaller limit than requested.
+    while (true) {
+      let query = supabase
+        .from("user_cards")
+        .select("pokemon_id")
+        .eq("user_id", user.id)
+        .order("pokemon_id", { ascending: true })
+        .limit(500);
+
+      if (lastPokemonId !== undefined) {
+        query = query.gt("pokemon_id", lastPokemonId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error(error);
+        alert("Não foi possível carregar sua coleção. Atualize a página para tentar novamente.");
+        return;
+      }
+
+      if (!data.length) break;
+
+      for (const item of data) ids.add(Number(item.pokemon_id));
+      lastPokemonId = Number(data[data.length - 1].pokemon_id);
     }
 
-    setOwnedIds(data.map((item) => item.pokemon_id));
+    setOwnedIds([...ids]);
   }, [setOwnedIds]);
 
   function handleToggleClick(pokemon: Pokemon) {
